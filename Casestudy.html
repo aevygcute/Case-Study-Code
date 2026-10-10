@@ -1,0 +1,1290 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SK Pinagbuhatan — Tournament Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4ADEB4',
+                        'primary-dark': '#00A886',
+                        sidebar: '#083B32',
+                        'sidebar-hover': '#0A4A3F',
+                        neutral: '#F8FAF9',
+                        'neutral-100': '#EEF2F1',
+                        'neutral-200': '#D8E3E1',
+                        'neutral-300': '#94A8A5',
+                        text: '#0F2622',
+                        'text-muted': '#5C7470',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444',
+                        live: '#FF6B35',
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .page { display: none; width: 1440px; height: 1024px; overflow: hidden; }
+            .page.active { display: flex; }
+            .sidebar-link {
+                @apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-200 cursor-pointer;
+                color: #B2CBC6;
+            }
+            .sidebar-link:hover { background: rgba(74,222,180,0.1); color: white; }
+            .sidebar-link.active { background: rgba(74,222,180,0.15); color: #4ADEB4; font-weight: 500; }
+            .form-input {
+                @apply w-full px-3 py-2.5 rounded-lg border border-neutral-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary;
+            }
+            .btn { @apply px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer; }
+            .btn-primary { @apply bg-primary text-text hover:bg-primary-dark hover:text-white; }
+            .btn-outline { @apply border border-neutral-200 bg-white text-text hover:bg-neutral-100; }
+            .btn-sm { @apply px-3 py-1.5 text-sm; }
+            .btn-xs { @apply px-2 py-1 text-xs; }
+            .btn-ghost { @apply bg-transparent text-text-muted hover:bg-neutral-100; }
+            .btn-danger { @apply bg-red-50 text-red-600 border border-red-200 hover:bg-red-100; }
+            .stat-card { @apply bg-white rounded-xl border border-neutral-100 p-4; }
+            .tag { @apply px-2 py-0.5 rounded-full text-xs font-medium; }
+            .tag-green { @apply bg-green-50 text-green-700; }
+            .tag-yellow { @apply bg-yellow-50 text-yellow-700; }
+            .tag-gray { @apply bg-neutral-100 text-text-muted; }
+            .tag-live { @apply bg-orange-50 text-orange-600; }
+            .bracket-match { @apply bg-white rounded-lg border border-neutral-100 p-3 w-52; }
+            .bracket-winner { @apply font-semibold text-primary-dark; }
+            .bracket-loser { @apply text-text-muted; }
+            .modal-backdrop { @apply absolute inset-0 bg-black/50 flex items-center justify-center z-50; display: none; }
+            .modal-box { @apply bg-white rounded-xl p-6 max-w-md w-full; }
+        }
+    </style>
+    <style>
+        html, body {
+            width: 1440px; height: 1024px; margin: 0; padding: 0; overflow: hidden;
+            background: #F8FAF9; font-family: Inter, system-ui, sans-serif;
+        }
+        .bracket-row { display: flex; justify-content: space-between; gap: 24px; }
+        .bracket-col { display: flex; flex-direction: column; gap: 16px; justify-content: space-around; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    </style>
+</head>
+<body>
+
+<script>
+function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const page = document.getElementById('page-' + id);
+    if (page) page.classList.add('active');
+    closeAllModals();
+}
+function closeAllModals() {
+    document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none');
+}
+function openModal(id) {
+    document.getElementById(id).style.display = 'flex';
+}
+document.addEventListener('DOMContentLoaded', () => showPage('login'));
+</script>
+
+<!-- ======================================
+   PAGE 1 — LOGIN
+   ====================================== -->
+<div id="page-login" class="page">
+    <div class="w-full flex">
+        <div class="w-1/2 bg-[#0F1E2F] text-white p-12 flex flex-col justify-center relative overflow-hidden">
+            <div class="absolute bottom-0 left-0 w-full opacity-10">
+                <svg width="100%" height="300" viewBox="0 0 800 300">
+                    <path d="M0,100 Q200,20 400,100 T800,100 L800,300 L0,300 Z" fill="#4ADEB4"/>
+                </svg>
+            </div>
+            <div class="relative z-10">
+                <div class="flex items-center gap-3 mb-16">
+                    <div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-black font-bold">SK</div>
+                    <div>
+                        <h2 class="font-semibold text-lg">SK Pinagbuhatan</h2>
+                        <p class="text-xs text-gray-400">Tournament Management</p>
+                    </div>
+                </div>
+                <h1 class="text-5xl font-bold mb-4">Make every <span class="text-primary">match</span> count.</h1>
+                <p class="text-gray-400 mb-12 max-w-sm">One simple workspace for planning tournaments, managing teams, and keeping your league moving.</p>
+                <div class="flex gap-10">
+                    <div><p class="text-3xl font-bold">16</p><p class="text-gray-400 text-sm mt-1">Teams active</p></div>
+                    <div><p class="text-3xl font-bold">30</p><p class="text-gray-400 text-sm mt-1">Total matches</p></div>
+                    <div><p class="text-3xl font-bold">14</p><p class="text-gray-400 text-sm mt-1">Days of play</p></div>
+                </div>
+            </div>
+        </div>
+        <div class="w-1/2 bg-white flex items-center justify-center p-12">
+            <div class="w-full max-w-md">
+                <h2 class="text-2xl font-bold mb-2">Welcome back</h2>
+                <p class="text-text-muted text-sm mb-8">Sign in to your workspace</p>
+                <form onsubmit="event.preventDefault(); showPage('dashboard');">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-text-muted mb-1.5">Email address</label>
+                        <input type="email" class="form-input" value="admin@skpasig.ph">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-text-muted mb-1.5">Password</label>
+                        <input type="password" class="form-input" placeholder="Enter your password">
+                        <p class="text-right text-sm text-primary mt-1 cursor-pointer">Forgot password?</p>
+                    </div>
+                    <label class="flex items-center gap-2 text-sm mb-6 text-text-muted">
+                        <input type="checkbox"> Keep me signed in
+                    </label>
+                    <button type="submit" class="btn btn-primary w-full">Sign in <i class="fa fa-arrow-right ml-1"></i></button>
+                    <p class="text-center text-sm text-text-muted mt-6">Need an account? Contact your administrator</p>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================
+   PAGE 2 — DASHBOARD
+   ====================================== -->
+<div id="page-dashboard" class="page bg-neutral">
+    <aside class="w-60 bg-sidebar text-white flex flex-col shrink-0">
+        <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-black font-bold">SK</div>
+                <div><h1 class="font-semibold text-sm">SK Pinagbuhatan</h1><p class="text-xs text-gray-400">Tournament Manager</p></div>
+            </div>
+        </div>
+        <div class="p-4 border-b border-white/10">
+            <p class="text-xs text-gray-400 mb-2">Current Tournament</p>
+            <select class="w-full bg-sidebar-hover border-0 rounded px-2 py-1.5 text-sm">
+                <option>Summer League 2025</option>
+            </select>
+        </div>
+        <nav class="flex-1 p-3">
+            <ul class="space-y-1">
+                <li><a class="sidebar-link active"><i class="fa fa-tachometer w-5 text-center"></i> Dashboard</a></li>
+                <li><a class="sidebar-link" onclick="showPage('tournament-mgmt')"><i class="fa fa-trophy w-5 text-center"></i> Tournament Management</a></li>
+                <li><a class="sidebar-link" onclick="showPage('bracket')"><i class="fa fa-list w-5 text-center"></i> Tournament Bracket</a></li>
+                <li><a class="sidebar-link" onclick="showPage('scheduling')"><i class="fa fa-calendar w-5 text-center"></i> Match Scheduling</a></li>
+                <li><a class="sidebar-link" onclick="showPage('standings')"><i class="fa fa-list-ol w-5 text-center"></i> Standings</a></li>
+                <li><a class="sidebar-link" onclick="showPage('venues')"><i class="fa fa-map-marker w-5 text-center"></i> Venues</a></li>
+                <li><a class="sidebar-link" onclick="showPage('reports')"><i class="fa fa-bar-chart w-5 text-center"></i> Reports</a></li>
+                <li><a class="sidebar-link" onclick="showPage('settings')"><i class="fa fa-cog w-5 text-center"></i> Settings</a></li>
+            </ul>
+        </nav>
+        <div class="p-3 border-t border-white/10">
+            <a class="sidebar-link" onclick="openModal('logout-modal')"><i class="fa fa-sign-out w-5 text-center"></i> Log out</a>
+        </div>
+    </aside>
+    <main class="flex-1 overflow-y-auto p-6">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h2 class="text-lg font-semibold">Dashboard Overview</h2>
+                <p class="text-sm text-text-muted">Welcome back! Here's what's happening today.</p>
+            </div>
+            <p class="text-sm text-text-muted">Oct 6, 2026</p>
+        </div>
+        <div class="grid grid-cols-4 gap-4 mb-6">
+            <div class="stat-card"><p class="text-text-muted text-sm">Total Teams</p><p class="text-2xl font-bold mt-1">16</p></div>
+            <div class="stat-card"><p class="text-text-muted text-sm">Matches Played</p><p class="text-2xl font-bold mt-1">18 <span class="text-sm font-normal text-text-muted">/ 30</span></p></div>
+            <div class="stat-card"><p class="text-text-muted text-sm">Venues Active</p><p class="text-2xl font-bold mt-1">5</p></div>
+            <div class="stat-card"><p class="text-text-muted text-sm">Avg. Score Diff</p><p class="text-2xl font-bold mt-1 text-primary-dark">+12.4</p></div>
+        </div>
+        <div class="grid grid-cols-3 gap-5">
+            <div class="col-span-2 stat-card">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold">Match In Progress</h3>
+                    <span class="tag tag-live">● LIVE Q3 • 7:15 PM</span>
+                </div>
+                <div class="flex items-center justify-center gap-10 py-4">
+                    <div class="text-center"><p class="font-medium">Pasig Titans</p><p class="text-4xl font-bold text-primary-dark mt-2">68</p></div>
+                    <p class="text-xl text-text-muted">VS</p>
+                    <div class="text-center"><p class="font-medium">San Joaquin Warriors</p><p class="text-4xl font-bold mt-2">59</p></div>
+                </div>
+                <p class="text-sm text-text-muted"><i class="fa fa-map-marker mr-1"></i> Pasig City Gymnasium — Court 1</p>
+                <button class="btn btn-primary mt-3">Update Score</button>
+            </div>
+            <div class="stat-card">
+                <h3 class="font-semibold mb-4">Quick Actions</h3>
+                <div class="space-y-3">
+                    <button class="btn btn-outline w-full text-left"><i class="fa fa-user-plus mr-2"></i> Register Team</button>
+                    <button class="btn btn-outline w-full text-left"><i class="fa fa-map-marker mr-2"></i> Add Venue</button>
+                    <button class="btn btn-outline w-full text-left"><i class="fa fa-download mr-2"></i> Export Report</button>
+                </div>
+            </div>
+            <div class="col-span-2 stat-card">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold">Upcoming Matches</h3>
+                    <a class="text-primary-dark text-sm cursor-pointer" onclick="showPage('scheduling')">View All →</a>
+                </div>
+                <div class="space-y-3">
+                    <div class="p-3 bg-neutral rounded-lg flex justify-between items-center">
+                        <div>
+                            <p class="font-medium">Rizal High Alumni vs Manggahan United</p>
+                            <p class="text-sm text-text-muted">Tomorrow • 5:30 PM • Manggahan Sports Complex</p>
+                        </div>
+                        <button class="btn btn-xs btn-outline">Preview</button>
+                    </div>
+                    <div class="p-3 bg-neutral rounded-lg flex justify-between items-center">
+                        <div>
+                            <p class="font-medium">Pinagbuhatan FC vs San Antonio Squad</p>
+                            <p class="text-sm text-text-muted">Oct 8 • 4:00 PM • Rosario Covered Court</p>
+                        </div>
+                        <button class="btn btn-xs btn-outline">Preview</button>
+                    </div>
+                    <div class="p-3 bg-neutral rounded-lg flex justify-between items-center">
+                        <div>
+                            <p class="font-medium">San Joaquin Multi-Purpose vs Pasig City Team B</p>
+                            <p class="text-sm text-text-muted">Oct 9 • 6:00 PM • San Joaquin Court</p>
+                        </div>
+                        <button class="btn btn-xs btn-outline">Preview</button>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold">Top Teams</h3>
+                    <a class="text-primary-dark text-sm cursor-pointer" onclick="showPage('standings')">Full →</a>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center"><span>1. Pasig Titans</span><span class="font-bold text-primary-dark">10 pts</span></div>
+                    <div class="flex justify-between items-center"><span>2. San Joaquin</span><span class="font-bold">8 pts</span></div>
+                    <div class="flex justify-between items-center"><span>3. Rizal High</span><span class="font-bold">6 pts</span></div>
+                    <div class="flex justify-between items-center"><span>4. Manggahan Utd</span><span class="font-bold">6 pts</span></div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ======================================
+   PAGE 3 — TOURNAMENT MANAGEMENT
+   ====================================== -->
+<div id="page-tournament-mgmt" class="page bg-neutral">
+    <aside class="w-60 bg-sidebar text-white flex flex-col shrink-0">
+        <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-black font-bold">SK</div>
+                <div><h1 class="font-semibold text-sm">SK Pinagbuhatan</h1><p class="text-xs text-gray-400">Tournament Manager</p></div>
+            </div>
+        </div>
+        <div class="p-4 border-b border-white/10">
+            <p class="text-xs text-gray-400 mb-2">Current Tournament</p>
+            <select class="w-full bg-sidebar-hover border-0 rounded px-2 py-1.5 text-sm">
+                <option>Summer League 2025</option>
+            </select>
+        </div>
+        <nav class="flex-1 p-3">
+            <ul class="space-y-1">
+                <li><a class="sidebar-link" onclick="showPage('dashboard')"><i class="fa fa-tachometer w-5 text-center"></i> Dashboard</a></li>
+                <li><a class="sidebar-link active"><i class="fa fa-trophy w-5 text-center"></i> Tournament Management</a></li>
+                <li><a class="sidebar-link" onclick="showPage('bracket')"><i class="fa fa-list w-5 text-center"></i> Tournament Bracket</a></li>
+                <li><a class="sidebar-link" onclick="showPage('scheduling')"><i class="fa fa-calendar w-5 text-center"></i> Match Scheduling</a></li>
+                <li><a class="sidebar-link" onclick="showPage('standings')"><i class="fa fa-list-ol w-5 text-center"></i> Standings</a></li>
+                <li><a class="sidebar-link" onclick="showPage('venues')"><i class="fa fa-map-marker w-5 text-center"></i> Venues</a></li>
+                <li><a class="sidebar-link" onclick="showPage('reports')"><i class="fa fa-bar-chart w-5 text-center"></i> Reports</a></li>
+                <li><a class="sidebar-link" onclick="showPage('settings')"><i class="fa fa-cog w-5 text-center"></i> Settings</a></li>
+            </ul>
+        </nav>
+        <div class="p-3 border-t border-white/10">
+            <a class="sidebar-link" onclick="openModal('logout-modal')"><i class="fa fa-sign-out w-5 text-center"></i> Log out</a>
+        </div>
+    </aside>
+    <main class="flex-1 overflow-y-auto p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-lg font-semibold">Tournament Management</h2>
+            <button class="btn btn-primary"><i class="fa fa-plus mr-1"></i> Create Tournament</button>
+        </div>
+        <div class="grid grid-cols-4 gap-4 mb-6">
+            <div class="stat-card"><p class="text-text-muted text-sm">Active Tournaments</p><p class="text-2xl font-bold mt-1">1</p></div>
+            <div class="stat-card"><p class="text-text-muted text-sm">Total Teams</p><p class="text-2xl font-bold mt-1">16</p></div>
+            <div class="stat-card"><p class="text-text-muted text-sm">Matches Scheduled</p><p class="text-2xl font-bold mt-1">30</p></div>
+            <div class="stat-card"><p class="text-text-muted text-sm">Completion</p><p class="text-2xl font-bold mt-1">60%</p></div>
+        </div>
+        <div class="flex gap-3 mb-5">
+            <select class="form-input max-w-xs"><option>All Status</option></select>
+            <select class="form-input max-w-xs"><option>All Sports</option></select>
+            <input type="text" class="form-input max-w-xs ml-auto" placeholder="Search tournaments...">
+        </div>
+        <div class="stat-card border-2 border-primary/40 mb-5">
+            <div class="flex justify-between items-start mb-3">
+                <h3 class="font-bold text-lg">Summer League 2025</h3>
+                <span class="tag tag-green">● Currently Active</span>
+            </div>
+            <p class="text-sm text-text-muted mb-3">Pinagbuhatan, Pasig City Inter-Barangay Sports Tournament</p>
+            <div class="grid grid-cols-4 gap-4 text-sm mb-4">
+                <div><p class="text-text-muted">Sport</p><p class="font-medium">Basketball</p></div>
+                <div><p class="text-text-muted">Duration</p><p class="font-medium">Jun 1 – Jul 31, 2025</p></div>
+                <div><p class="text-text-muted">Divisions</p><p class="font-medium">A, B, C</p></div>
+                <div><p class="text-text-muted">Teams Registered</p><p class="font-medium">16 / 16</p></div>
+            </div>
+            <div class="w-full bg-neutral-100 rounded-full h-2 mb-4">
+                <div class="bg-primary h-2 rounded-full" style="width:60%"></div>
+            </div>
+            <p class="text-sm text-text-muted mb-3">18/30 matches completed</p>
+            <div class="flex gap-2">
+                <button class="btn btn-primary btn-sm"><i class="fa fa-cog mr-1"></i> Manage</button>
+                <button class="btn btn-outline btn-sm">Teams</button>
+                <button class="btn btn-outline btn-sm" onclick="showPage('bracket')">Bracket</button>
+                <button class="btn btn-outline btn-sm">Export</button>
+            </div>
+        </div>
+        <h4 class="font-semibold mb-3">All Tournaments</h4>
+        <div class="grid grid-cols-3 gap-4">
+            <div class="stat-card">
+                <span class="tag tag-green">Completed</span>
+                <h5 class="font-semibold mt-2">Spring Cup 2025</h5>
+                <p class="text-sm text-text-muted mt-1">Basketball • 12 Teams<br>Mar 1 – Apr 30, 2025</p>
+                <div class="flex gap-2 mt-3">
+                    <button class="btn btn-xs btn-outline">View</button>
+                    <button class="btn btn-xs btn-outline">Duplicate</button>
+                </div>
+            </div>
+            <div class="stat-card">
+                <span class="tag tag-yellow">Draft</span>
+                <h5 class="font-semibold mt-2">Youth League</h5>
+                <p class="text-sm text-text-muted mt-1">Volleyball • 8 Teams<br>Aug 15 – Sep 30, 2025 (Planned)</p>
+                <div class="flex gap-2 mt-3">
+                    <button class="btn btn-xs btn-primary">Edit</button>
+                    <button class="btn btn-xs btn-outline">Delete</button>
+                </div>
+            </div>
+            <div class="stat-card border-dashed flex flex-col items-center justify-center text-center py-6 cursor-pointer hover:bg-neutral-50">
+                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary-dark mb-2"><i class="fa fa-plus"></i></div>
+                <h5 class="font-medium">Create New Tournament</h5>
+                <p class="text-xs text-text-muted mt-1">Set up divisions, teams & schedule</p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ======================================
+   PAGE 4 — TOURNAMENT BRACKET
+   ====================================== -->
+<div id="page-bracket" class="page bg-neutral">
+    <aside class="w-60 bg-sidebar text-white flex flex-col shrink-0">
+        <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-black font-bold">SK</div>
+                <div><h1 class="font-semibold text-sm">SK Pinagbuhatan</h1><p class="text-xs text-gray-400">Tournament Manager</p></div>
+            </div>
+        </div>
+        <div class="p-4 border-b border-white/10">
+            <p class="text-xs text-gray-400 mb-2">Current Tournament</p>
+            <select class="w-full bg-sidebar-hover border-0 rounded px-2 py-1.5 text-sm">
+                <option>Summer League 2025</option>
+            </select>
+        </div>
+        <nav class="flex-1 p-3">
+            <ul class="space-y-1">
+                <li><a class="sidebar-link" onclick="showPage('dashboard')"><i class="fa fa-tachometer w-5 text-center"></i> Dashboard</a></li>
+                <li><a class="sidebar-link" onclick="showPage('tournament-mgmt')"><i class="fa fa-trophy w-5 text-center"></i> Tournament Management</a></li>
+                <li><a class="sidebar-link active"><i class="fa fa-list w-5 text-center"></i> Tournament Bracket</a></li>
+                <li><a class="sidebar-link" onclick="showPage('scheduling')"><i class="fa fa-calendar w-5 text-center"></i> Match Scheduling</a></li>
+                <li><a class="sidebar-link" onclick="showPage('standings')"><i class="fa fa-list-ol w-5 text-center"></i> Standings</a></li>
+                <li><a class="sidebar-link" onclick="showPage('venues')"><i class="fa fa-map-marker w-5 text-center"></i> Venues</a></li>
+                <li><a class="sidebar-link" onclick="showPage('reports')"><i class="fa fa-bar-chart w-5 text-center"></i> Reports</a></li>
+                <li><a class="sidebar-link" onclick="showPage('settings')"><i class="fa fa-cog w-5 text-center"></i> Settings</a></li>
+            </ul>
+        </nav>
+        <div class="p-3 border-t border-white/10">
+            <a class="sidebar-link" onclick="openModal('logout-modal')"><i class="fa fa-sign-out w-5 text-center"></i> Log out</a>
+        </div>
+    </aside>
+    <main class="flex-1 overflow-auto p-6">
+        <div class="flex gap-2 mb-6">
+            <button class="btn btn-primary btn-sm">Division A</button>
+            <button class="btn btn-ghost btn-sm">Finals</button>
+        </div>
+        <div class="stat-card">
+            <h3 class="font-semibold mb-5">Division A — Knockout Stage</h3>
+            <div class="flex gap-4 mb-5 text-xs">
+                <span class="flex items-center gap-1.5"><span class="dot bg-primary"></span> Winner</span>
+                <span class="flex items-center gap-1.5"><span class="dot bg-neutral-300"></span> Completed</span>
+                <span class="flex items-center gap-1.5"><span class="dot bg-gray-200"></span> Upcoming</span>
+            </div>
+            <div class="bracket-row">
+                <div class="bracket-col">
+                    <h4 class="text-sm font-medium text-text-muted">Quarterfinals</h4>
+                    <div class="bracket-match">
+                        <div class="flex justify-between py-1 border-b border-neutral-100"><span class="bracket-winner">Pasig Titans</span><span class="font-medium">88</span></div>
+                        <div class="flex justify-between py-1"><span class="bracket-loser">San Antonio</span><span>72</span></div>
+                        <p class="text-xs text-text-muted mt-1">Jan 15, 2025 • 6:00 PM</p>
+                    </div>
+                    <div class="bracket-match">
+                        <div class="flex justify-between py-1 border-b border-neutral-100"><span class="bracket-winner">Rizal Alumni</span><span class="font-medium">76</span></div>
+                        <div class="flex justify-between py-1"><span class="bracket-loser">Pinagbuhatan Utd</span><span>68</span></div>
+                        <p class="text-xs text-text-muted mt-1">Jan 16, 2025 • 5:30 PM</p>
+                    </div>
+                    <div class="bracket-match">
+                        <div class="flex justify-between py-1 border-b border-neutral-100"><span class="bracket-winner">San Joaquin</span><span class="font-medium">92</span></div>
+                        <div class="flex justify-between py-1"><span class="bracket-loser">Karangalan</span><span>85</span></div>
+                        <p class="text-xs text-text-muted mt-1">Jan 17, 2025 • 7:00 PM</p>
+                    </div>
+                    <div class="bracket-match">
+                        <div class="flex justify-between py-1 border-b border-neutral-100"><span class="bracket-winner">Manggahan</span><span class="font-medium">81</span></div>
+                        <div class="flex justify-between py-1"><span class="bracket-loser">Rosario</span><span>79</span></div>
+                        <p class="text-xs text-text-muted mt-1">Jan 18, 2025 • 6:00 PM</p>
+                    </div>
+                </div>
+                <div class="bracket-col">
+                    <h4 class="text-sm font-medium text-text-muted">Semifinals</h4>
+                    <div class="bracket-match">
+                        <div class="flex justify-between py-1 border-b border-neutral-100"><span class="bracket-winner">Pasig Titans</span><span class="font-medium">74</span></div>
+                        <div class="flex justify-between py-1"><span class="bracket-loser">Rizal Alumni</span><span>65</span></div>
+                        <p class="text-xs text-text-muted mt-1">Jun 22, 2025 • 6:00 PM</p>
+                    </div>
+                    <div class="bracket-match">
+                        <div class="flex justify-between py-1 border-b border-neutral-100"><span class="bracket-winner">San Joaquin</span><span class="font-medium">82</span></div>
+                        <div class="flex justify-between py-1"><span class="bracket-loser">Manggahan</span><span>77</span></div>
+                        <p class="text-xs text-text-muted mt-1">Jun 23, 2025 • 6:00 PM</p>
+                    </div>
+                </div>
+                <div class="bracket-col">
+                    <h4 class="text-sm font-medium text-primary-dark font-bold">🏆 Championship</h4>
+                    <div class="bracket-match border-2 border-primary">
+                        <div class="flex justify-between py-1 border-b border-neutral-100"><span class="bracket-winner">Pasig Titans</span><span class="font-medium">95</span></div>
+                        <div class="flex justify-between py-1"><span class="bracket-loser">San Joaquin</span><span>88</span></div>
+                        <p class="text-xs text-primary-dark mt-1 font-medium">Jun 28, 2025 • 7:00 PM — Champion: Pasig Titans</p>
+                    </div>
+                </div>
+                <div class="bracket-col">
+                    <h4 class="text-sm font-medium text-text-muted">3rd Place</h4>
+                    <div class="bracket-match">
+                        <div class="flex justify-between py-1 border-b border-neutral-100"><span class="bracket-winner">Rizal Alumni</span><span class="font-medium">78</span></div>
+                        <div class="flex justify-between py-1"><span class="bracket-loser">Manggahan</span><span>71</span></div>
+                        <p class="text-xs text-text-muted mt-1">Jun 27, 2025 • 5:00 PM</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ======================================
+   PAGE 5 — MATCH SCHEDULING
+   ====================================== -->
+<div id="page-scheduling" class="page bg-neutral">
+    <aside class="w-60 bg-sidebar text-white flex flex-col shrink-0">
+        <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-black font-bold">SK</div>
+                <div><h1 class="font-semibold text-sm">SK Pinagbuhatan</h1><p class="text-xs text-gray-400">Tournament Manager</p></div>
+            </div>
+        </div>
+        <div class="p-4 border-b border-white/10">
+            <p class="text-xs text-gray-400 mb-2">Current Tournament</p>
+            <select class="w-full bg-sidebar-hover border-0 rounded px-2 py-1.5 text-sm">
+                <option>Summer League 2025</option>
+            </select>
+        </div>
+        <nav class="flex-1 p-3">
+            <ul class="space-y-1">
+                <li><a class="sidebar-link" onclick="showPage('dashboard')"><i class="fa fa-tachometer w-5 text-center"></i> Dashboard</a></li>
+                <li><a class="sidebar-link" onclick="showPage('tournament-mgmt')"><i class="fa fa-trophy w-5 text-center"></i> Tournament Management</a></li>
+                <li><a class="sidebar-link" onclick="showPage('bracket')"><i class="fa fa-list w-5 text-center"></i> Tournament Bracket</a></li>
+                <li><a class="sidebar-link active"><i class="fa fa-calendar w-5 text-center"></i> Match Scheduling</a></li>
+                <li><a class="sidebar-link" onclick="showPage('standings')"><i class="fa fa-list-ol w-5 text-center"></i> Standings</a></li>
+                <li><a class="sidebar-link" onclick="showPage('venues')"><i class="fa fa-map-marker w-5 text-center"></i> Venues</a></li>
+                <li><a class="sidebar-link" onclick="showPage('reports')"><i class="fa fa-bar-chart w-5 text-center"></i> Reports</a></li>
+                <li><a class="sidebar-link" onclick="showPage('settings')"><i class="fa fa-cog w-5 text-center"></i> Settings</a></li>
+            </ul>
+        </nav>
+        <div class="p-3 border-t border-white/10">
+            <a class="sidebar-link" onclick="openModal('logout-modal')"><i class="fa fa-sign-out w-5 text-center"></i> Log out</a>
+        </div>
+    </aside>
+    <main class="flex-1 overflow-y-auto p-6">
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex gap-2">
+                <select class="form-input max-w-xs"><option>All Divisions</option></select>
+                <select class="form-input max-w-xs"><option>All Venues</option></select>
+                <select class="form-input max-w-xs"><option>All Status</option></select>
+            </div>
+            <div class="flex gap-2">
+                <button class="btn btn-primary btn-sm"><i class="fa fa-list"></i> List</button>
+                <button class="btn btn-outline btn-sm"><i class="fa fa-calendar"></i> Calendar</button>
+            </div>
+        </div>
+        <h3 class="font-semibold mb-3">Upcoming & Live Matches</h3>
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="stat-card border-l-4 border-live">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="tag tag-live">● LIVE — Q3</span>
+                    <span class="text-sm text-text-muted">Court 1</span>
+                </div>
+                <div class="flex items-center justify-center gap-6 py-3">
+                    <div class="text-center"><p class="font-medium">Pasig Titans</p><p class="text-3xl font-bold text-primary-dark mt-1">68</p></div>
+                    <p class="text-text-muted">VS</p>
+                    <div class="text-center"><p class="font-medium">San Joaquin Warriors</p><p class="text-3xl font-bold mt-1">59</p></div>
+                </div>
+                <p class="text-sm text-text-muted"><i class="fa fa-map-marker mr-1"></i> Pasig City Gymnasium — 7:00 PM</p>
+            </div>
+            <div class="stat-card">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="tag tag-green">Scheduled</span>
+                    <span class="text-sm text-text-muted">Tomorrow • 5:30 PM</span>
+                </div>
+                <div class="flex items-center justify-center gap-6 py-3">
+                    <div class="text-center"><p class="font-medium">Rizal High Alumni</p><p class="text-xl font-bold mt-1">—</p></div>
+                    <p class="text-text-muted">VS</p>
+                    <div class="text-center"><p class="font-medium">Manggahan United</p><p class="text-xl font-bold mt-1">—</p></div>
+                </div>
+                <p class="text-sm text-text-muted"><i class="fa fa-map-marker mr-1"></i> Manggahan Sports Complex</p>
+            </div>
+            <div class="stat-card">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="tag tag-green">Scheduled</span>
+                    <span class="text-sm text-text-muted">Oct 8 • 4:00 PM</span>
+                </div>
+                <div class="flex items-center justify-center gap-6 py-3">
+                    <div class="text-center"><p class="font-medium">Pinagbuhatan FC</p><p class="text-xl font-bold mt-1">—</p></div>
+                    <p class="text-text-muted">VS</p>
+                    <div class="text-center"><p class="font-medium">San Antonio Squad</p><p class="text-xl font-bold mt-1">—</p></div>
+                </div>
+                <p class="text-sm text-text-muted"><i class="fa fa-map-marker mr-1"></i> Rosario Covered Court</p>
+            </div>
+            <div class="stat-card">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="tag tag-green">Scheduled</span>
+                    <span class="text-sm text-text-muted">Oct 9 • 6:00 PM</span>
+                </div>
+                <div class="flex items-center justify-center gap-6 py-3">
+                    <div class="text-center"><p class="font-medium">San Joaquin Multi-Purpose</p><p class="text-xl font-bold mt-1">—</p></div>
+                    <p class="text-text-muted">VS</p>
+                    <div class="text-center"><p class="font-medium">Pasig City Team B</p><p class="text-xl font-bold mt-1">—</p></div>
+                </div>
+                <p class="text-sm text-text-muted"><i class="fa fa-map-marker mr-1"></i> San Joaquin Court</p>
+            </div>
+        </div>
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="font-semibold">Recent Results</h3>
+            <a class="text-primary-dark text-sm">View All →</a>
+        </div>
+        <div class="stat-card overflow-hidden">
+            <table class="w-full text-sm">
+                <thead class="bg-neutral text-left">
+                    <tr>
+                        <th class="px-4 py-2.5 font-medium text-text-muted">Date</th>
+                        <th class="px-4 py-2.5 font-medium text-text-muted">Matchup</th>
+                        <th class="px-4 py-2.5 font-medium text-text-muted">Score</th>
+                        <th class="px-4 py-2.5 font-medium text-text-muted">Venue</th>
+                        <th class="px-4 py-2.5 font-medium text-text-muted">Status</th>
+                        <th class="px-4 py-2.5 font-medium text-right text-text-muted">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-neutral-100">
+                    <tr>
+                        <td class="px-4 py-3">Oct 5</td>
+                        <td class="px-4 py-3">Pasig Titans vs Rizal High</td>
+                        <td class="px-4 py-3 font-medium">88 – 72</td>
+                        <td class="px-4 py-3 text-text-muted">Pasig City Gym</td>
+                        <td class="px-4 py-3"><span class="tag tag-green">Completed</span></td>
+                        <td class="px-4 py-3 text-right"><button class="btn btn-xs btn-outline">Details</button></td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 py-3">Oct 4</td>
+                        <td class="px-4 py-3">San Joaquin vs Pinagbuhatan</td>
+                        <td class="px-4 py-3 font-medium">75 – 68</td>
+                        <td class="px-4 py-3 text-text-muted">San Joaquin Court</td>
+                        <td class="px-4 py-3"><span class="tag tag-green">Completed</span></td>
+                        <td class="px-4 py-3 text-right"><button class="btn btn-xs btn-outline">Details</button></td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 py-3">Oct 3</td>
+                        <td class="px-4 py-3">Manggahan vs San Antonio</td>
+                        <td class="px-4 py-3 font-medium">62 – 55</td>
+                        <td class="px-4 py-3 text-text-muted">Manggahan Complex</td>
+                        <td class="px-4 py-3"><span class="tag tag-green">Completed</span></td>
+                        <td class="px-4 py-3 text-right"><button class="btn btn-xs btn-outline">Details</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<!-- ======================================
+   PAGE 6 — STANDINGS
+   ====================================== -->
+<div id="page-standings" class="page bg-neutral">
+    <aside class="w-60 bg-sidebar text-white flex flex-col shrink-0">
+        <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-black font-bold">SK</div>
+                <div>
+                    <h1 class="font-semibold text-sm">SK Pinagbuhatan</h1>
+                    <p class="text-xs text-gray-400">Tournament Manager</p>
+                </div>
+            </div>
+        </div>
+        <div class="p-4 border-b border-white/10">
+            <p class="text-xs text-gray-400 mb-2">Current Tournament</p>
+            <select class="w-full bg-sidebar-hover border-0 rounded px-2 py-1.5 text-sm">
+                <option>Summer League 2025</option>
+            </select>
+        </div>
+        <nav class="flex-1 p-3">
+            <ul class="space-y-1">
+                <li><a class="sidebar-link" onclick="showPage('dashboard')"><i class="fa fa-tachometer w-5 text-center"></i> Dashboard</a></li>
+                <li><a class="sidebar-link" onclick="showPage('tournament-mgmt')"><i class="fa fa-trophy w-5 text-center"></i> Tournament Management</a></li>
+                <li><a class="sidebar-link" onclick="showPage('bracket')"><i class="fa fa-list w-5 text-center"></i> Tournament Bracket</a></li>
+                <li><a class="sidebar-link" onclick="showPage('scheduling')"><i class="fa fa-calendar w-5 text-center"></i> Match Scheduling</a></li>
+                <li><a class="sidebar-link active"><i class="fa fa-list-ol w-5 text-center"></i> Standings</a></li>
+                <li><a class="sidebar-link" onclick="showPage('venues')"><i class="fa fa-map-marker w-5 text-center"></i> Venues</a></li>
+                <li><a class="sidebar-link" onclick="showPage('reports')"><i class="fa fa-bar-chart w-5 text-center"></i> Reports</a></li>
+                <li><a class="sidebar-link" onclick="showPage('settings')"><i class="fa fa-cog w-5 text-center"></i> Settings</a></li>
+            </ul>
+        </nav>
+        <div class="p-3 border-t border-white/10">
+            <a class="sidebar-link" onclick="openModal('logout-modal')"><i class="fa fa-sign-out w-5 text-center"></i> Log out</a>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto">
+        <header class="flex justify-between items-center px-6 py-4 bg-white border-b">
+            <h2 class="font-semibold">Standings</h2>
+            <div class="flex items-center gap-3">
+                <span class="text-xs text-text-muted">Updated: Jun 28, 2025 7:30 PM</span>
+                <button class="btn btn-outline btn-sm" onclick="exportStandings()">
+                    <i class="fa fa-download"></i> Export
+                </button>
+            </div>
+        </header>
+
+        <div class="p-6">
+            <div class="grid grid-cols-3 gap-4 mb-4">
+                <div class="stat-card">
+                    <p class="text-sm text-text-muted">Teams</p>
+                    <p class="text-2xl font-bold">16</p>
+                </div>
+                <div class="stat-card">
+                    <p class="text-sm text-text-muted">Matches Played</p>
+                    <p class="text-2xl font-bold">18 / 30</p>
+                </div>
+                <div class="stat-card">
+                    <p class="text-sm text-text-muted">Leading Team</p>
+                    <p class="text-xl font-bold text-primary-dark">Pasig Titans</p>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mb-3">
+                <select id="standing-division" class="form-input max-w-xs">
+                    <option value="A">Division A</option>
+                    <option value="B">Division B</option>
+                    <option value="All">All Divisions</option>
+                </select>
+                <div class="flex gap-2">
+                    <button class="btn btn-primary btn-sm" onclick="filterStandings('Overall')">Overall</button>
+                    <button class="btn btn-outline btn-sm" onclick="filterStandings('Home')">Home</button>
+                    <button class="btn btn-outline btn-sm" onclick="filterStandings('Away')">Away</button>
+                </div>
+            </div>
+
+            <div class="stat-card overflow-x-auto !p-0">
+                <table class="w-full text-sm" id="standings-table">
+                    <thead class="bg-neutral text-left">
+                        <tr>
+                            <th class="px-3 py-3">#</th>
+                            <th class="px-3 py-3">Team</th>
+                            <th class="px-3 py-3">GP</th>
+                            <th class="px-3 py-3">W</th>
+                            <th class="px-3 py-3">L</th>
+                            <th class="px-3 py-3">Pts</th>
+                            <th class="px-3 py-3">GF</th>
+                            <th class="px-3 py-3">GA</th>
+                            <th class="px-3 py-3">Diff</th>
+                            <th class="px-3 py-3">Streak</th>
+                            <th class="px-3 py-3">Last 5</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-neutral-100">
+                        <tr>
+                            <td class="px-3 py-3"><span class="tag tag-yellow">1</span></td>
+                            <td class="px-3 py-3 font-medium">Pasig Titans</td>
+                            <td class="px-3 py-3">5</td>
+                            <td class="px-3 py-3 text-primary-dark font-semibold">5</td>
+                            <td class="px-3 py-3">0</td>
+                            <td class="px-3 py-3 font-bold">10</td>
+                            <td class="px-3 py-3">452</td>
+                            <td class="px-3 py-3">321</td>
+                            <td class="px-3 py-3 text-primary-dark">+131</td>
+                            <td class="px-3 py-3 text-primary-dark">W5</td>
+                            <td class="px-3 py-3 text-primary-dark">●●●●●</td>
+                        </tr>
+                        <tr>
+                            <td class="px-3 py-3">2</td>
+                            <td class="px-3 py-3 font-medium">San Joaquin Warriors</td>
+                            <td class="px-3 py-3">5</td>
+                            <td class="px-3 py-3 text-primary-dark">4</td>
+                            <td class="px-3 py-3">1</td>
+                            <td class="px-3 py-3 font-bold">8</td>
+                            <td class="px-3 py-3">418</td>
+                            <td class="px-3 py-3">355</td>
+                            <td class="px-3 py-3 text-primary-dark">+63</td>
+                            <td class="px-3 py-3 text-primary-dark">W3</td>
+                            <td class="px-3 py-3 text-primary-dark">●●●●●</td>
+                        </tr>
+                        <tr>
+                            <td class="px-3 py-3">3</td>
+                            <td class="px-3 py-3 font-medium">Rizal High Alumni</td>
+                            <td class="px-3 py-3">5</td>
+                            <td class="px-3 py-3 text-primary-dark">3</td>
+                            <td class="px-3 py-3">2</td>
+                            <td class="px-3 py-3 font-bold">6</td>
+                            <td class="px-3 py-3">385</td>
+                            <td class="px-3 py-3">362</td>
+                            <td class="px-3 py-3 text-primary-dark">+23</td>
+                            <td class="px-3 py-3 text-red-500">L1</td>
+                            <td class="px-3 py-3">●●●●●</td>
+                        </tr>
+                        <tr>
+                            <td class="px-3 py-3">4</td>
+                            <td class="px-3 py-3 font-medium">Manggahan United</td>
+                            <td class="px-3 py-3">5</td>
+                            <td class="px-3 py-3 text-primary-dark">3</td>
+                            <td class="px-3 py-3">2</td>
+                            <td class="px-3 py-3 font-bold">6</td>
+                            <td class="px-3 py-3">372</td>
+                            <td class="px-3 py-3">368</td>
+                            <td class="px-3 py-3 text-primary-dark">+4</td>
+                            <td class="px-3 py-3 text-primary-dark">W2</td>
+                            <td class="px-3 py-3">●●●●●</td>
+                        </tr>
+                        <tr>
+                            <td class="px-3 py-3">5</td>
+                            <td class="px-3 py-3 font-medium">Pinagbuhatan FC</td>
+                            <td class="px-3 py-3">5</td>
+                            <td class="px-3 py-3 text-primary-dark">2</td>
+                            <td class="px-3 py-3">3</td>
+                            <td class="px-3 py-3 font-bold">4</td>
+                            <td class="px-3 py-3">345</td>
+                            <td class="px-3 py-3">378</td>
+                            <td class="px-3 py-3 text-red-500">-33</td>
+                            <td class="px-3 py-3 text-red-500">L2</td>
+                            <td class="px-3 py-3">●●●●●</td>
+                        </tr>
+                        <tr>
+                            <td class="px-3 py-3">6</td>
+                            <td class="px-3 py-3 font-medium">San Antonio Squad</td>
+                            <td class="px-3 py-3">5</td>
+                            <td class="px-3 py-3 text-primary-dark">1</td>
+                            <td class="px-3 py-3">4</td>
+                            <td class="px-3 py-3 font-bold">2</td>
+                            <td class="px-3 py-3">330</td>
+                            <td class="px-3 py-3">402</td>
+                            <td class="px-3 py-3 text-red-500">-72</td>
+                            <td class="px-3 py-3 text-red-500">L3</td>
+                            <td class="px-3 py-3">●●●●●</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex gap-4 text-xs text-text-muted mt-3">
+                <span><b class="text-primary-dark">●</b> Win</span>
+                <span><b class="text-red-500">●</b> Loss</span>
+                <span>GP = Games Played • W = Wins • L = Losses • Pts = Points • GF = Points For • GA = Points Against • Diff = Net Points</span>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ======================================
+   PAGE 6 — VENUES
+   ====================================== -->
+<div id="page-venues" class="page bg-neutral">
+    <aside class="w-60 bg-sidebar text-white flex flex-col shrink-0">
+        <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-black font-bold">SK</div>
+                <div>
+                    <h1 class="font-semibold text-sm">SK Pinagbuhatan</h1>
+                    <p class="text-xs text-gray-400">Tournament Manager</p>
+                </div>
+            </div>
+        </div>
+        <div class="p-4 border-b border-white/10">
+            <p class="text-xs text-gray-400 mb-2">Current Tournament</p>
+            <select class="w-full bg-sidebar-hover border-0 rounded px-2 py-1.5 text-sm">
+                <option>Summer League 2025</option>
+            </select>
+        </div>
+        <nav class="flex-1 p-3">
+            <ul class="space-y-1">
+                <li><a class="sidebar-link" onclick="showPage('dashboard')"><i class="fa fa-tachometer w-5 text-center"></i> Dashboard</a></li>
+                <li><a class="sidebar-link" onclick="showPage('tournament-mgmt')"><i class="fa fa-trophy w-5 text-center"></i> Tournament Management</a></li>
+                <li><a class="sidebar-link" onclick="showPage('bracket')"><i class="fa fa-list w-5 text-center"></i> Tournament Bracket</a></li>
+                <li><a class="sidebar-link" onclick="showPage('scheduling')"><i class="fa fa-calendar w-5 text-center"></i> Match Scheduling</a></li>
+                <li><a class="sidebar-link" onclick="showPage('standings')"><i class="fa fa-list-ol w-5 text-center"></i> Standings</a></li>
+                <li><a class="sidebar-link active"><i class="fa fa-map-marker w-5 text-center"></i> Venues</a></li>
+                <li><a class="sidebar-link" onclick="showPage('reports')"><i class="fa fa-bar-chart w-5 text-center"></i> Reports</a></li>
+                <li><a class="sidebar-link" onclick="showPage('settings')"><i class="fa fa-cog w-5 text-center"></i> Settings</a></li>
+            </ul>
+        </nav>
+        <div class="p-3 border-t border-white/10">
+            <a class="sidebar-link" onclick="openModal('logout-modal')"><i class="fa fa-sign-out w-5 text-center"></i> Log out</a>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-6">
+        <h2 class="font-semibold text-lg mb-5">Venues</h2>
+
+        <div class="flex justify-between gap-4 mb-5">
+            <input id="venue-search" type="search" class="form-input max-w-sm" placeholder="Search venues..." oninput="searchVenues()">
+            <select id="venue-status" class="form-input max-w-xs" onchange="filterVenues()">
+                <option value="All">All Status</option>
+                <option value="Available">Available</option>
+                <option value="In Use">In Use</option>
+            </select>
+        </div>
+
+        <div id="venue-grid" class="grid grid-cols-3 gap-4">
+            <div class="stat-card venue-card" data-status="Available">
+                <div class="flex justify-between items-start mb-3">
+                    <h3 class="font-semibold">Pasig City Gymnasium</h3>
+                    <span class="tag tag-green">Available</span>
+                </div>
+                <p class="text-sm text-text-muted mb-3"><i class="fa fa-map-marker mr-1"></i> Caruncho Ave, Barangay San Nicolas</p>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div><p class="text-xs text-text-muted">Capacity</p><p>1,500 people</p></div>
+                    <div><p class="text-xs text-text-muted">Courts</p><p>2 (Main & Practice)</p></div>
+                    <div><p class="text-xs text-text-muted">Sport Types</p><p>Basketball, Volleyball</p></div>
+                    <div><p class="text-xs text-text-muted">Time Slots</p><p>8:00 AM – 10:00 PM</p></div>
+                </div>
+                <hr class="my-3 border-neutral-100">
+                <p class="text-sm text-text-muted">12 matches scheduled</p>
+            </div>
+
+            <div class="stat-card venue-card" data-status="In Use">
+                <div class="flex justify-between items-start mb-3">
+                    <h3 class="font-semibold">Barangay Hall Court</h3>
+                    <span class="tag tag-yellow">In Use</span>
+                </div>
+                <p class="text-sm text-text-muted mb-3"><i class="fa fa-map-marker mr-1"></i> Barangay San Antonio</p>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div><p class="text-xs text-text-muted">Capacity</p><p>300 people</p></div>
+                    <div><p class="text-xs text-text-muted">Courts</p><p>1 Outdoor</p></div>
+                    <div><p class="text-xs text-text-muted">Sport Types</p><p>Basketball, Volleyball</p></div>
+                    <div><p class="text-xs text-text-muted">Time Slots</p><p>4:00 PM – 9:00 PM</p></div>
+                </div>
+                <hr class="my-3 border-neutral-100">
+                <p class="text-sm text-text-muted">8 matches scheduled</p>
+            </div>
+
+            <div class="stat-card venue-card" data-status="Available">
+                <div class="flex justify-between items-start mb-3">
+                    <h3 class="font-semibold">Manggahan Sports Complex</h3>
+                    <span class="tag tag-green">Available</span>
+                </div>
+                <p class="text-sm text-text-muted mb-3"><i class="fa fa-map-marker mr-1"></i> Manggahan, Pasig City</p>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div><p class="text-xs text-text-muted">Capacity</p><p>800 people</p></div>
+                    <div><p class="text-xs text-text-muted">Courts</p><p>1 Indoor</p></div>
+                    <div><p class="text-xs text-text-muted">Sport Types</p><p>Badminton, Basketball</p></div>
+                    <div><p class="text-xs text-text-muted">Time Slots</p><p>7:00 AM – 9:00 PM</p></div>
+                </div>
+                <hr class="my-3 border-neutral-100">
+                <p class="text-sm text-text-muted">5 matches scheduled</p>
+            </div>
+
+            <div class="stat-card venue-card" data-status="Available">
+                <div class="flex justify-between items-start mb-3">
+                    <h3 class="font-semibold">Rosario Covered Court</h3>
+                    <span class="tag tag-green">Available</span>
+                </div>
+                <p class="text-sm text-text-muted mb-3"><i class="fa fa-map-marker mr-1"></i> Barangay Rosario</p>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div><p class="text-xs text-text-muted">Capacity</p><p>400 people</p></div>
+                    <div><p class="text-xs text-text-muted">Courts</p><p>1 Covered</p></div>
+                    <div><p class="text-xs text-text-muted">Sport Types</p><p>Basketball</p></div>
+                    <div><p class="text-xs text-text-muted">Time Slots</p><p>3:00 PM – 10:00 PM</p></div>
+                </div>
+                <hr class="my-3 border-neutral-100">
+                <p class="text-sm text-text-muted">4 matches scheduled</p>
+            </div>
+
+            <div class="stat-card venue-card" data-status="In Use">
+                <div class="flex justify-between items-start mb-3">
+                    <h3 class="font-semibold">San Joaquin Multi-Purpose</h3>
+                    <span class="tag tag-yellow">In Use</span>
+                </div>
+                <p class="text-sm text-text-muted mb-3"><i class="fa fa-map-marker mr-1"></i> Barangay San Joaquin</p>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div><p class="text-xs text-text-muted">Capacity</p><p>250 people</p></div>
+                    <div><p class="text-xs text-text-muted">Courts</p><p>1 Outdoor</p></div>
+                    <div><p class="text-xs text-text-muted">Sport Types</p><p>Volleyball, Basketball</p></div>
+                    <div><p class="text-xs text-text-muted">Time Slots</p><p>5:00 PM – 9:00 PM</p></div>
+                </div>
+                <hr class="my-3 border-neutral-100">
+                <p class="text-sm text-text-muted">6 matches scheduled</p>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center mt-6 text-sm text-text-muted">
+            <span>Showing 1–5 of 8 venues</span>
+            <button class="btn btn-primary btn-sm">1</button>
+        </div>
+    </main>
+</div>
+
+<!-- ======================================
+   PAGE 6 — REPORTS
+   ====================================== -->
+
+<div id="page-reports" class="page bg-neutral">
+    <aside class="w-60 bg-sidebar text-white flex flex-col shrink-0">
+        <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-black font-bold">SK</div>
+                <div>
+                    <h1 class="font-semibold text-sm">SK Pinagbuhatan</h1>
+                    <p class="text-xs text-gray-400">Tournament Manager</p>
+                </div>
+            </div>
+        </div>
+        <div class="p-4 border-b border-white/10">
+            <p class="text-xs text-gray-400 mb-2">Current Tournament</p>
+            <select class="w-full bg-sidebar-hover border-0 rounded px-2 py-1.5 text-sm">
+                <option>Summer League 2025</option>
+            </select>
+        </div>
+        <nav class="flex-1 p-3">
+            <ul class="space-y-1">
+                <li><a class="sidebar-link" onclick="showPage('dashboard')"><i class="fa fa-tachometer w-5 text-center"></i> Dashboard</a></li>
+                <li><a class="sidebar-link" onclick="showPage('tournament-mgmt')"><i class="fa fa-trophy w-5 text-center"></i> Tournament Management</a></li>
+                <li><a class="sidebar-link" onclick="showPage('bracket')"><i class="fa fa-list w-5 text-center"></i> Tournament Bracket</a></li>
+                <li><a class="sidebar-link" onclick="showPage('scheduling')"><i class="fa fa-calendar w-5 text-center"></i> Match Scheduling</a></li>
+                <li><a class="sidebar-link" onclick="showPage('standings')"><i class="fa fa-list-ol w-5 text-center"></i> Standings</a></li>
+                <li><a class="sidebar-link" onclick="showPage('venues')"><i class="fa fa-map-marker w-5 text-center"></i> Venues</a></li>
+                <li><a class="sidebar-link active"><i class="fa fa-bar-chart w-5 text-center"></i> Reports</a></li>
+                <li><a class="sidebar-link" onclick="showPage('settings')"><i class="fa fa-cog w-5 text-center"></i> Settings</a></li>
+            </ul>
+        </nav>
+        <div class="p-3 border-t border-white/10">
+            <a class="sidebar-link" onclick="openModal('logout-modal')"><i class="fa fa-sign-out w-5 text-center"></i> Log out</a>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-6">
+        <div class="flex justify-between items-center mb-5">
+            <h2 class="font-semibold text-lg">Reports</h2>
+            <button class="btn btn-primary btn-sm" onclick="exportAllReports()">
+                <i class="fa fa-download"></i> Export All
+            </button>
+        </div>
+
+        <div class="grid grid-cols-4 gap-3 mb-4">
+            <div class="stat-card">
+                <p class="text-sm text-text-muted">Total Teams</p>
+                <p class="text-2xl font-bold">16</p>
+            </div>
+            <div class="stat-card">
+                <p class="text-sm text-text-muted">Matches Completed</p>
+                <p class="text-2xl font-bold">18</p>
+            </div>
+            <div class="stat-card">
+                <p class="text-sm text-text-muted">Total Points Scored</p>
+                <p class="text-2xl font-bold text-primary-dark">2,458</p>
+            </div>
+            <div class="stat-card">
+                <p class="text-sm text-text-muted">Avg. Attendance</p>
+                <p class="text-2xl font-bold">420</p>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex gap-2">
+                <select id="report-division" class="form-input max-w-xs">
+                    <option>All Divisions</option>
+                    <option>Division A</option>
+                    <option>Division B</option>
+                </select>
+                <select id="report-venue" class="form-input max-w-xs">
+                    <option>All Venues</option>
+                    <option>Pasig City Gymnasium</option>
+                    <option>Manggahan Sports Complex</option>
+                    <option>Rosario Covered Court</option>
+                </select>
+            </div>
+            <span class="text-xs text-text-muted">Generated: Oct 6, 2026 07:55 AM</span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4 mb-4">
+            <div class="stat-card">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="w-10 h-10 rounded-lg bg-primary/10 text-primary-dark flex items-center justify-center"><i class="fa fa-list-ol"></i></span>
+                    <button class="text-text-muted" onclick="alert('Team Standings report options')">⋮</button>
+                </div>
+                <h3 class="font-semibold mb-1">Team Standings</h3>
+                <p class="text-sm text-text-muted mb-3">Current rankings, win/loss records and points per team</p>
+                <div class="flex justify-between items-center text-xs text-text-muted">
+                    <span>Updated Jun 28</span>
+                    <button class="btn btn-primary btn-sm" onclick="viewReport('Team Standings')"><i class="fa fa-eye"></i> View</button>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="w-10 h-10 rounded-lg bg-primary/10 text-primary-dark flex items-center justify-center"><i class="fa fa-calendar-check-o"></i></span>
+                    <button class="text-text-muted" onclick="alert('Match Summary report options')">⋮</button>
+                </div>
+                <h3 class="font-semibold mb-1">Match Summary</h3>
+                <p class="text-sm text-text-muted mb-3">Scores, attendance and venue utilization per match</p>
+                <div class="flex justify-between items-center text-xs text-text-muted">
+                    <span>18 records</span>
+                    <button class="btn btn-primary btn-sm" onclick="viewReport('Match Summary')"><i class="fa fa-eye"></i> View</button>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="w-10 h-10 rounded-lg bg-primary/10 text-primary-dark flex items-center justify-center"><i class="fa fa-map-marker"></i></span>
+                    <button class="text-text-muted" onclick="alert('Venue Usage report options')">⋮</button>
+                </div>
+                <h3 class="font-semibold mb-1">Venue Usage</h3>
+                <p class="text-sm text-text-muted mb-3">Scheduling frequency, peak hours and occupancy rates</p>
+                <div class="flex justify-between items-center text-xs text-text-muted">
+                    <span>5 venues</span>
+                    <button class="btn btn-primary btn-sm" onclick="viewReport('Venue Usage')"><i class="fa fa-eye"></i> View</button>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="w-10 h-10 rounded-lg bg-primary/10 text-primary-dark flex items-center justify-center"><i class="fa fa-bar-chart"></i></span>
+                    <button class="text-text-muted" onclick="alert('Performance Stats report options')">⋮</button>
+                </div>
+                <h3 class="font-semibold mb-1">Performance Stats</h3>
+                <p class="text-sm text-text-muted mb-3">Top scorers, averages and comparative team metrics</p>
+                <div class="flex justify-between items-center text-xs text-text-muted">
+                    <span>Division A</span>
+                    <button class="btn btn-primary btn-sm" onclick="viewReport('Performance Stats')"><i class="fa fa-eye"></i> View</button>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="w-10 h-10 rounded-lg bg-primary/10 text-primary-dark flex items-center justify-center"><i class="fa fa-clock-o"></i></span>
+                    <button class="text-text-muted" onclick="alert('Schedule Efficiency report options')">⋮</button>
+                </div>
+                <h3 class="font-semibold mb-1">Schedule Efficiency</h3>
+                <p class="text-sm text-text-muted mb-3">Match timing, delays and rescheduling history</p>
+                <div class="flex justify-between items-center text-xs text-text-muted">
+                    <span>98% on time</span>
+                    <button class="btn btn-primary btn-sm" onclick="viewReport('Schedule Efficiency')"><i class="fa fa-eye"></i> View</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card overflow-hidden !p-0">
+            <div class="p-4 border-b border-neutral-100">
+                <h3 class="font-semibold">Recent Exports</h3>
+            </div>
+            <table class="w-full text-sm">
+                <thead class="bg-neutral text-left">
+                    <tr>
+                        <th class="px-4 py-3">Report Name</th>
+                        <th class="px-4 py-3">Generated By</th>
+                        <th class="px-4 py-3">Date</th>
+                        <th class="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-neutral-100">
+                    <tr>
+                        <td class="px-4 py-3">Team Standings — Division A</td>
+                        <td class="px-4 py-3 text-text-muted">Admin</td>
+                        <td class="px-4 py-3 text-text-muted">Jun 28, 2025</td>
+                        <td class="px-4 py-3 text-right"><button class="btn btn-outline btn-sm" onclick="downloadReport('Team Standings — Division A')"><i class="fa fa-download"></i> Download</button></td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 py-3">Venue Usage Summary — All Venues</td>
+                        <td class="px-4 py-3 text-text-muted">Admin</td>
+                        <td class="px-4 py-3 text-text-muted">Jun 25, 2025</td>
+                        <td class="px-4 py-3 text-right"><button class="btn btn-outline btn-sm" onclick="downloadReport('Venue Usage Summary — All Venues')"><i class="fa fa-download"></i> Download</button></td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 py-3">Match Summary — Week 3</td>
+                        <td class="px-4 py-3 text-text-muted">Admin</td>
+                        <td class="px-4 py-3 text-text-muted">Jun 22, 2025</td>
+                        <td class="px-4 py-3 text-right"><button class="btn btn-outline btn-sm" onclick="downloadReport('Match Summary — Week 3')"><i class="fa fa-download"></i> Download</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<!-- ======================================
+   PAGE 6 — SETTINGS
+   ====================================== -->
+
+<div id="page-settings" class="page bg-neutral">
+    <aside class="w-60 bg-sidebar text-white flex flex-col shrink-0">
+        <div class="p-4 border-b border-white/10">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-black font-bold">SK</div>
+                <div>
+                    <h1 class="font-semibold text-sm">SK Pinagbuhatan</h1>
+                    <p class="text-xs text-gray-400">Tournament Manager</p>
+                </div>
+            </div>
+        </div>
+        <div class="p-4 border-b border-white/10">
+            <p class="text-xs text-gray-400 mb-2">Current Tournament</p>
+            <select class="w-full bg-sidebar-hover border-0 rounded px-2 py-1.5 text-sm">
+                <option>Summer League 2025</option>
+            </select>
+        </div>
+        <nav class="flex-1 p-3">
+            <ul class="space-y-1">
+                <li><a class="sidebar-link" onclick="showPage('dashboard')"><i class="fa fa-tachometer w-5 text-center"></i> Dashboard</a></li>
+                <li><a class="sidebar-link" onclick="showPage('tournament-mgmt')"><i class="fa fa-trophy w-5 text-center"></i> Tournament Management</a></li>
+                <li><a class="sidebar-link" onclick="showPage('bracket')"><i class="fa fa-list w-5 text-center"></i> Tournament Bracket</a></li>
+                <li><a class="sidebar-link" onclick="showPage('scheduling')"><i class="fa fa-calendar w-5 text-center"></i> Match Scheduling</a></li>
+                <li><a class="sidebar-link" onclick="showPage('standings')"><i class="fa fa-list-ol w-5 text-center"></i> Standings</a></li>
+                <li><a class="sidebar-link" onclick="showPage('venues')"><i class="fa fa-map-marker w-5 text-center"></i> Venues</a></li>
+                <li><a class="sidebar-link" onclick="showPage('reports')"><i class="fa fa-bar-chart w-5 text-center"></i> Reports</a></li>
+                <li><a class="sidebar-link active"><i class="fa fa-cog w-5 text-center"></i> Settings</a></li>
+            </ul>
+        </nav>
+        <div class="p-3 border-t border-white/10">
+            <a class="sidebar-link" onclick="openModal('logout-modal')"><i class="fa fa-sign-out w-5 text-center"></i> Log out</a>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-6">
+        <div class="flex justify-between items-center mb-5">
+            <h2 class="font-semibold text-lg">Settings</h2>
+            <button class="btn btn-primary btn-sm" onclick="saveSettings()">
+                <i class="fa fa-check"></i> Save Changes
+            </button>
+        </div>
+
+        <form id="settings-form" onsubmit="event.preventDefault(); saveSettings();">
+            <div class="stat-card mb-4">
+                <h3 class="font-semibold mb-4">Account & Profile</h3>
+                <div class="grid grid-cols-4 gap-4 items-center">
+                    <div class="text-center">
+                        <div class="w-16 h-16 rounded-full bg-primary/10 text-primary-dark flex items-center justify-center text-2xl font-bold mx-auto mb-2">A</div>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('profile-photo').click()">Change Photo</button>
+                        <input type="file" id="profile-photo" accept="image/*" class="hidden" onchange="previewProfilePhoto(event)">
+                    </div>
+                    <div class="col-span-3 grid grid-cols-2 gap-4">
+                        <label class="text-sm">Full Name
+                            <input type="text" class="form-input mt-1" name="fullName" value="Admin User">
+                        </label>
+                        <label class="text-sm">Email Address
+                            <input type="email" class="form-input mt-1" name="email" value="admin@skpasig.ph">
+                        </label>
+                        <label class="text-sm">Role
+                            <input type="text" class="form-input mt-1" name="role" value="Super Admin" readonly>
+                        </label>
+                        <label class="text-sm">Contact Number
+                            <input type="tel" class="form-input mt-1" name="contact" value="+63 917 123 4567">
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card mb-4">
+                <h3 class="font-semibold mb-4">Tournament Defaults</h3>
+                <div class="grid grid-cols-3 gap-4">
+                    <label class="text-sm">Default Sport
+                        <select class="form-input mt-1" name="sport">
+                            <option>Basketball</option>
+                            <option>Volleyball</option>
+                            <option>Badminton</option>
+                            <option>Football</option>
+                        </select>
+                    </label>
+                    <label class="text-sm">Points for Win
+                        <input type="number" class="form-input mt-1" name="pointsWin" value="2" min="0">
+                    </label>
+                    <label class="text-sm">Points for Draw
+                        <input type="number" class="form-input mt-1" name="pointsDraw" value="1" min="0">
+                    </label>
+                    <label class="text-sm">Match Duration (mins)
+                        <input type="number" class="form-input mt-1" name="duration" value="60" min="1">
+                    </label>
+                    <label class="text-sm">Scoring Type
+                        <select class="form-input mt-1" name="scoring">
+                            <option>Total Points</option>
+                            <option>Win/Loss</option>
+                            <option>Sets Won</option>
+                        </select>
+                    </label>
+                    <label class="text-sm">Timezone
+                        <select class="form-input mt-1" name="timezone">
+                            <option>Asia/Manila (UTC+8)</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+
+            <div class="stat-card mb-4">
+                <h3 class="font-semibold mb-4">Notifications & Alerts</h3>
+                <div class="space-y-4">
+                    <label class="flex justify-between items-center gap-4">
+                        <span><b>Email Notifications</b><small class="block text-text-muted">Receive updates on match schedules and results</small></span>
+                        <input type="checkbox" name="emailNotifications" checked class="w-5 h-5 accent-teal-500">
+                    </label>
+                    <label class="flex justify-between items-center gap-4">
+                        <span><b>Status Change Alerts</b><small class="block text-text-muted">Notify when venue or match status changes</small></span>
+                        <input type="checkbox" name="statusAlerts" checked class="w-5 h-5 accent-teal-500">
+                    </label>
+                    <label class="flex justify-between items-center gap-4">
+                        <span><b>Weekly Summary Report</b><small class="block text-text-muted">Auto-email performance overview every Monday</small></span>
+                        <input type="checkbox" name="weeklyReport" class="w-5 h-5 accent-teal-500">
+                    </label>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="stat-card">
+                    <h3 class="font-semibold mb-4">Security</h3>
+                    <button type="button" class="btn btn-outline w-full mb-2" onclick="alert('Open change password form')"><i class="fa fa-lock mr-2"></i> Change Password</button>
+                    <button type="button" class="btn btn-outline w-full mb-2" onclick="alert('Open two-factor authentication settings')"><i class="fa fa-shield mr-2"></i> Two-Factor Authentication</button>
+                    <button type="button" class="btn btn-outline w-full" onclick="alert('Login activity')"><i class="fa fa-history mr-2"></i> Login Activity</button>
+                </div>
+
+                <div class="stat-card">
+                    <h3 class="font-semibold mb-4">Data Management</h3>
+                    <button type="button" class="btn btn-outline w-full mb-2" onclick="exportTournamentData()"><i class="fa fa-download mr-2"></i> Export All Data</button>
+                    <button type="button" class="btn btn-outline w-full mb-2" onclick="archiveTournament()"><i class="fa fa-archive mr-2"></i> Archive Tournament</button>
+                    <button type="button" class="btn btn-outline w-full text-red-500 border-red-200" onclick="confirmDeleteTournament()"><i class="fa fa-trash mr-2"></i> Delete Tournament</button>
+                </div>
+            </div>
+        </form>
+    </main>
+</div>
+
+<!-- ======================================
+   PAGE 6 — LOGOUT
+   ====================================== -->
+
+<div id="logout-modal" class="modal-overlay hidden fixed inset-0 z-50 bg-black/20 flex items-center justify-center">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-8 relative">
+        <button class="absolute top-4 right-4 text-gray-400 hover:text-gray-700" onclick="closeModal('logout-modal')">
+            <i class="fa fa-times"></i>
+        </button>
+
+        <div class="w-12 h-12 rounded-xl bg-red-50 text-red-500 flex items-center justify-center mb-4">
+            <i class="fa fa-sign-out text-xl"></i>
+        </div>
+
+        <h2 class="text-xl font-bold mb-2">Log out of workspace?</h2>
+        <p class="text-sm text-text-muted mb-6">You'll need to sign in again to manage your tournaments.</p>
+
+        <div class="flex justify-end items-center gap-3">
+            <button class="btn btn-outline" onclick="closeModal('logout-modal')">Stay signed in</button>
+            <button class="btn bg-red-500 text-white hover:bg-red-600" onclick="logoutUser()">
+                <i class="fa fa-sign-out mr-1"></i> Log out
+            </button>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
